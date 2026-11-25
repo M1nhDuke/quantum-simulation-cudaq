@@ -174,10 +174,3 @@ tests/           test_vqe.py
 results/         CSVs + PNGs
 ```
 
-## Résumé bullet
-
-> Built a GPU quantum-simulation and VQE pipeline in NVIDIA CUDA-Q on an 8 GB Blackwell laptop
-> GPU: simulated statevectors up to the 29-qubit memory ceiling (fp32; 28 in fp64), ran
-> 13111× faster than CUDA-Q's CPU backend at 22 qubits, and reproduced the H₂ potential energy
-> curve with UCCSD-VQE to within 6.66e-12 mHa of FCI at all 28 bond lengths (chemical accuracy:
-> 1.6 mHa).
