@@ -11,11 +11,11 @@ lengths, far inside chemical accuracy (1.6 mHa). Every number below is read from
 
 | | |
 |---|---|
-| GPU | NVIDIA RTX PRO 2000 Blackwell Generation Laptop GPU (compute capability 12.0, sm_120) |
-| VRAM | 8151 MiB (7.96 GiB), shared with the Windows desktop |
+| GPU | NVIDIA RTX PRO 2000 Blackwell Generation Laptop GPU |
+| VRAM | 8GiB, shared with the Windows desktop |
 | Driver | 597.01 (Windows host driver, CUDA 13.2), used through WSL2 |
 | CPU | Intel Core Ultra 7 255H, 16 threads visible to WSL |
-| OS | Ubuntu 26.04.1 LTS on WSL2 (kernel 6.18.33.2-microsoft-standard-WSL2) |
+| OS | Ubuntu 26.04.1 LTS on WSL2 |
 | CUDA-Q | 0.17.0 (`cudaq` / `cuda-quantum-cu13` wheels) |
 | Python | 3.14.4 |
 | Chemistry | PySCF 2.15.1, OpenFermion 1.8.1, openfermionpyscf 0.5 |
