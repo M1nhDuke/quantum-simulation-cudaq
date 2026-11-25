@@ -4,11 +4,13 @@ Every (backend, circuit, n) point runs in its own subprocess (``_single_run.py``
 out-of-memory crash or a timeout at one size is logged and the sweep continues. Peak GPU
 memory is polled with pynvml from this (parent) process while the child runs.
 
-Writes ``results/scaling.csv`` and ``results/correctness.csv`` (n <= 20 agreement check).
+Writes ``results/scaling.csv`` (merged by (backend, circuit, n), so a subset can be re-run)
+and ``results/correctness.csv`` (n <= 20 agreement check across all requested backends).
 """
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import re
 import signal
@@ -78,21 +80,33 @@ def main() -> None:
     p.add_argument("--out", default=str(ROOT / "results" / "scaling.csv"))
     a = p.parse_args()
     backends, circuits = a.backends.split(","), a.circuits.split(",")
+    plan = [(b, c, n) for b in backends for c in circuits
+            for n in range(a.min_qubits, min(MAX_QUBITS[b], a.max_qubits) + 1)]
+
+    # merge: rows of an existing CSV that this run does not re-measure are kept
+    out, planned = Path(a.out), set(plan)
+    kept = []
+    if out.exists():
+        with out.open(newline="") as f:
+            kept = [r for r in csv.DictReader(f)
+                    if (r["backend"], r["circuit"], int(r["n_qubits"])) not in planned]
+    order = list(MAX_QUBITS)
 
     rows, expvals = [], {}
-    for backend in backends:
-        for circuit in circuits:
-            for n in range(a.min_qubits, min(MAX_QUBITS[backend], a.max_qubits) + 1):
-                row, ev = measure(backend, circuit, n, a.repeats, a.timeout)
-                print(json.dumps(row), flush=True)
-                rows.append(row)
-                write_csv(a.out, rows, FIELDS)  # rewrite after every point: partial runs keep data
-                if ev is not None and n <= CHECK_MAX_N:
-                    expvals[(circuit, n, backend)] = ev
+    for backend, circuit, n in plan:
+        row, ev = measure(backend, circuit, n, a.repeats, a.timeout)
+        print(json.dumps(row), flush=True)
+        rows.append(row)
+        merged = sorted(kept + rows, key=lambda r: (order.index(r["backend"]), r["circuit"] != "hwe",
+                                                    int(r["n_qubits"])))
+        write_csv(out, merged, FIELDS)  # rewrite after every point: partial runs keep data
+        if ev is not None and n <= CHECK_MAX_N:
+            expvals[(circuit, n, backend)] = ev
 
     check = correctness_rows(expvals, backends)
-    write_csv(Path(a.out).with_name("correctness.csv"), check,
-              ["circuit", "n_qubits", *backends, "max_abs_diff", "agree"])
+    if check:  # a run without all backends has nothing to compare; keep the old file
+        write_csv(out.with_name("correctness.csv"), check,
+                  ["circuit", "n_qubits", *backends, "max_abs_diff", "agree"])
     print(f"correctness (n<={CHECK_MAX_N}, tol {CHECK_TOL}): "
           f"{sum(r['agree'] for r in check)}/{len(check)} points agree")
 

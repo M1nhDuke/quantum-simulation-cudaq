@@ -99,9 +99,3 @@ def write_csv(path: str | Path, rows: Iterable[Mapping[str, Any]], fields: list[
         w = csv.DictWriter(f, fieldnames=fields)
         w.writeheader()
         w.writerows(rows)
-
-
-def read_csv(path: str | Path) -> list[dict[str, str]]:
-    """Read a CSV into a list of dicts (all values as strings)."""
-    with Path(path).open(newline="") as f:
-        return list(csv.DictReader(f))
